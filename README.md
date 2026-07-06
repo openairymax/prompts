@@ -1,66 +1,124 @@
-# Prompts — AgentRT 提示词管理模块
+# Prompts — Prompt Template Library + Evaluation / Tuning Framework
 
-**模块路径**: `ecosystem/prompts/`
-**版本**: v1.0.0
+> Systematic prompt template management, versioning, evaluation and A/B tuning for the Airymax platform.
+> A leaf repository under the [Airymax ecosystem](https://atomgit.com/openairymax/ecosystem).
 
-## 概述
+**Language:** English | [简体中文](README_zh.md)
 
-Prompts 是 AgentRT 的提示词管理模块，提供系统化的 Prompt 模板管理、版本控制、调优和评估能力。模板按认知（Cognition）、记忆（Memory）、安全（Security）、系统（System）四大类别组织，支持 A/B 测试和数据集驱动的自动调优，帮助开发者持续优化智能体行为。
+[![Version](https://img.shields.io/badge/version-0.1.1-5a6b7e)](https://atomgit.com/openairymax/prompts)
+[![License](https://img.shields.io/badge/license-AGPL--3.0+Apache--2.0-4a90d9)](LICENSE)
+[![Branch](https://img.shields.io/badge/branch-feature%2Fofficial--hubs--01-6f7b8e)](https://atomgit.com/openairymax/prompts)
 
-## 目录结构
+---
+
+## Module Positioning
+
+`ecosystem/prompts/` is the **prompt template library and evaluation / tuning framework** of the Airymax AI Agent Runtime Platform. It provides everything needed to version, evaluate and continuously optimize the prompts that drive agent behavior:
+
+- A curated catalog of **14 official prompt templates** across 4 categories (Cognition / Memory / Security / System)
+- A **registry** (`registry.yaml`) that tracks version, category and lifecycle status (`stable` / `testing` / `deprecated`) for every template
+- An **evaluation framework** (`tuner/`) that runs prompts against JSONL datasets and produces precision / recall / hallucination / latency reports
+- An **A/B testing framework** that compares two prompt versions on the same dataset with paired t-test significance
+
+Templates are plain YAML with `system`, `user_template`, `output_schema` and `metrics` sections, so they can be consumed directly by the AgentRT runtime or any SDK that speaks the Airymax prompt format.
+
+## Directory Structure
 
 ```
 prompts/
-├── registry.yaml             # 提示词注册表（版本/分类/状态）
-├── templates/
-│   ├── cognition/            # 认知类提示词
-│   │   ├── intent_classify.yaml   # 意图分类
-│   │   ├── entity_extract.yaml    # 实体提取
-│   │   ├── plan_generate.yaml     # 计划生成
-│   │   └── reflection.yaml        # 反思
-│   ├── memory/               # 记忆类提示词
-│   │   ├── extract_facts.yaml     # 事实提取
-│   │   ├── dedup_decision.yaml    # 去重决策
-│   │   ├── summarize.yaml         # 摘要压缩
-│   │   └── rule_generate.yaml     # 规则归纳
-│   ├── security/             # 安全类提示词
-│   │   ├── code_review.yaml       # 代码安全审查
-│   │   ├── security_scan.yaml     # 安全扫描
-│   │   └── input_validate.yaml    # 输入校验
-│   └── system/               # 系统类提示词
-│       ├── default_agent.yaml     # 默认智能体
-│       ├── coding_agent.yaml      # 编码智能体
-│       └── research_agent.yaml    # 研究智能体
-├── datasets/                 # 评估数据集
-│   ├── cognition/
+├── registry.yaml                       # Prompt registry (version / category / status)
+├── templates/                          # Prompt template library (14 templates)
+│   ├── cognition/                      # Cognitive prompts
+│   │   ├── intent_classify.yaml        # Intent classification
+│   │   ├── entity_extract.yaml         # Named entity extraction
+│   │   ├── plan_generate.yaml          # Plan generation
+│   │   └── reflection.yaml             # Reflection
+│   ├── memory/                         # Memory prompts
+│   │   ├── extract_facts.yaml          # Atomic fact extraction
+│   │   ├── dedup_decision.yaml         # Deduplication decision
+│   │   ├── summarize.yaml              # Iterative summarization
+│   │   └── rule_generate.yaml          # L4 rule induction
+│   ├── security/                       # Security prompts
+│   │   ├── code_review.yaml            # Code security review
+│   │   ├── security_scan.yaml          # System security scan
+│   │   └── input_validate.yaml         # Input validation
+│   └── system/                         # System prompts
+│       ├── default_agent.yaml          # Default agent
+│       ├── coding_agent.yaml           # Coding agent
+│       └── research_agent.yaml         # Research agent
+├── datasets/                           # Evaluation datasets (JSONL)
+│   ├── cognition/                      # 3 dataset versions + generators
+│   │   ├── dataset_v1.jsonl
+│   │   ├── dataset_v2.jsonl
+│   │   ├── dataset_v3.jsonl
+│   │   ├── gen_v3_*.py                 # Dataset generation scripts
+│   │   └── merge_v3.py
+│   ├── memory/
 │   │   ├── dataset_v1.jsonl
 │   │   └── dataset_v2.jsonl
-│   ├── memory/
-│   │   └── dataset_v1.jsonl
 │   ├── security/
 │   │   └── dataset_v1.jsonl
 │   └── system/
 │       └── dataset_v1.jsonl
-├── tuner/                    # 提示词调优工具
-│   ├── __init__.py
-│   ├── scorer.py             # 评分器
-│   ├── evaluate.py           # 评估器
-│   └── ab_test.py            # A/B 测试
-└── README.md                 # 本文件
+├── tuner/                              # Evaluation & tuning framework
+│   ├── src/
+│   │   ├── scorer.py                   # Field-level precision / recall / hallucination
+│   │   ├── evaluate.py                 # Dataset-driven evaluator + report builder
+│   │   └── ab_test.py                  # Paired t-test A/B comparison
+│   └── tests/
+│       └── test_tuner.py
+├── .github/workflows/ci.yml            # CI pipeline
+├── .gitignore
+└── README.md                           # This file
 ```
 
-## 提示词分类
+## Prompt Categories
 
-| 分类 | 数量 | 说明 |
-|------|:----:|------|
-| **Cognition** | 4 | 意图分类、实体提取、计划生成、反思 |
-| **Memory** | 4 | 事实提取、去重决策、摘要压缩、规则归纳 |
-| **Security** | 3 | 代码审查、安全扫描、输入校验 |
-| **System** | 3 | 默认智能体、编码智能体、研究智能体 |
+| Category | Count | Templates | Description |
+|----------|:-----:|-----------|-------------|
+| **Cognition** | 4 | `intent_classify`, `entity_extract`, `plan_generate`, `reflection` | Cognitive tasks: classification, extraction, planning, reflection |
+| **Memory** | 4 | `extract_facts`, `dedup_decision`, `summarize`, `rule_generate` | Memory operations: fact extraction, dedup, summarization, rule induction |
+| **Security** | 3 | `code_review`, `security_scan`, `input_validate` | Security: code review, security scan, input validation |
+| **System** | 3 | `default_agent`, `coding_agent`, `research_agent` | System prompts for different agent personas |
 
-## 注册表管理
+## Template Structure
 
-`registry.yaml` 集中管理所有提示词的元信息：
+Every template is a YAML file with the following fields:
+
+```yaml
+name: intent_classify
+version: "1.0.0"
+description: "Classify user input into predefined intent categories"
+model_family: any
+temperature: 0.1
+max_tokens: 256
+
+system: |
+  You are an intent classification system. ...
+
+user_template: |
+  {conversation_history}
+  User input: "{user_input}"
+  Classify the intent.
+
+output_schema:
+  type: object
+  properties:
+    intent: {type: string, enum: [question, task, chat, analysis, creative, command, ambiguous]}
+    confidence: {type: number, minimum: 0, maximum: 1}
+  required: [intent, confidence]
+
+metrics:
+  target_precision: 0.92
+  target_recall: 0.90
+  max_hallucination_rate: 0.01
+```
+
+The `metrics` block declares the quality gates the evaluator checks against.
+
+## Registry
+
+`registry.yaml` is the single source of truth for every prompt's metadata:
 
 ```yaml
 prompts:
@@ -68,112 +126,103 @@ prompts:
     version: "1.0.0"
     category: "cognition"
     path: "templates/cognition/intent_classify.yaml"
-    status: "stable"  # stable | testing | deprecated
+    description: "..."
+    model_family: "any"
+    status: "stable"   # stable | testing | deprecated
 ```
 
-### 状态说明
+| Status | Meaning |
+|--------|---------|
+| `stable` | Production-ready, fully tested |
+| `testing` | Under test, may change |
+| `deprecated` | Deprecated, scheduled for removal |
 
-| 状态 | 说明 |
-|------|------|
-| `stable` | 生产可用，经过充分测试 |
-| `testing` | 测试中，可能存在变更 |
-| `deprecated` | 已弃用，计划移除 |
+## Upstream / Downstream Dependencies
 
-## 提示词模板结构
+### Upstream
 
-每个模板为 YAML 格式，包含以下字段：
+**None.** `prompts/` is a self-contained template library. It does not import any other Airymax repository and only relies on standard tooling to render and evaluate templates:
 
-```yaml
-name: intent_classify
-version: 1.0.0
-description: "将用户输入分类为预定义的意图类别"
-model_family: any
-parameters:
-  temperature: 0.3
-  max_tokens: 256
-messages:
-  - role: system
-    content: |
-      你是一个意图分类器...
-  - role: user
-    content: |
-      用户输入: {{input}}
-      可选的类别: {{categories}}
-```
+| Dependency | Purpose |
+|------------|---------|
+| Python ≥ 3.10 | Tuner runtime |
+| `PyYAML` | Template & registry parsing |
+| `requests` (optional) | Gateway calls during online evaluation; offline mode works without it |
+| `pytest` | Tuner tests |
 
-## 调优工具 (Tuner)
+### Downstream
 
-提供 Prompt 调优和评估能力，支持数据驱动的迭代优化。
+| Consumer | How it uses `prompts/` |
+|----------|------------------------|
+| **Agent applications** | Load templates via the Airymax SDK (`sdk-python` / `sdk-go` / `sdk-rust` / `sdk-typescript`) and render them with runtime context |
+| **AgentRT runtime** | Reads `registry.yaml` to resolve prompt names and versions; serves `/v1/prompt/execute` endpoints |
+| **CI / CD pipelines** | Run `tuner/src/evaluate.py` as a quality gate before promoting a prompt from `testing` to `stable` |
+| **Prompt authors** | Use `tuner/src/ab_test.py` to validate that a candidate version beats the baseline before merging |
 
-### 评分器 (`scorer.py`)
+## Usage
+
+### Programmatic evaluation
 
 ```python
-from tuner.scorer import Scorer
+from tuner.src.evaluate import PromptEvaluator
 
-scorer = Scorer()
-score = scorer.score(
-    prompt_name="intent_classify",
-    dataset_path="datasets/cognition/dataset_v1.jsonl"
+evaluator = PromptEvaluator(
+    prompts_dir="ecosystem/prompts",
+    gateway_url="http://localhost:8080",   # optional, offline mode if unreachable
 )
-```
-
-### 评估器 (`evaluate.py`)
-
-```python
-from tuner.evaluate import Evaluator
-
-evaluator = Evaluator()
 report = evaluator.evaluate(
-    prompt_name="intent_classify",
-    version="1.0.0"
+    prompt_name="extract_facts",
+    version="1.0.0",
+    dataset_path="datasets/memory/dataset_v1.jsonl",
 )
+print(report.avg_precision, report.avg_recall, report.hallucination_rate)
 ```
 
-### A/B 测试 (`ab_test.py`)
+### A/B testing
 
 ```python
 from tuner.src.ab_test import ABTest
 
-ab = ABTest()
+ab = ABTest(
+    prompts_dir="ecosystem/prompts",
+    gateway_url="http://localhost:8080",
+)
 result = ab.compare(
     prompt_name="intent_classify",
-    baseline="1.0.0",
-    candidate="1.1.0",
-    dataset="datasets/cognition/dataset_v1.jsonl"
+    baseline_version="1.0.0",
+    candidate_version="1.1.0",
+    dataset_path="datasets/cognition/dataset_v1.jsonl",
 )
+print(result.significant, result.p_value)
 ```
 
-## 使用示例 (CLI)
+### CLI
 
 ```bash
-# 列出所有提示词
-agentrt prompt list
+# Evaluate a prompt against a dataset
+python -m tuner.src.evaluate intent_classify \
+    --version 1.0.0 \
+    --dataset datasets/cognition/dataset_v1.jsonl \
+    --output report.json
 
-# 查看提示词详情
-agentrt prompt show intent_classify
-
-# 调优提示词
-agentrt prompt tune intent_classify --dataset ./datasets/cognition/dataset_v1.jsonl
-
-# A/B 测试
-agentrt prompt ab-test intent_classify --baseline v1 --candidate v2
+# Run tuner tests
+python -m pytest tuner/tests/ -v
 ```
 
-## 扩展指南
+### Adding a new prompt
 
-### 添加新提示词
+1. Create a YAML template under the appropriate `templates/<category>/` directory.
+2. Register it in `registry.yaml` with `status: testing`.
+3. (Optional) Add an evaluation dataset under `datasets/<category>/`.
+4. Validate with the evaluator: `python -m tuner.src.evaluate <name> --dataset <path>`.
+5. Once quality gates pass, flip `status` to `stable`.
 
-1. 在对应分类目录下创建 YAML 模板文件
-2. 在 `registry.yaml` 中注册新提示词
-3. （可选）添加评估数据集到对应分类目录
-4. 使用 CLI 验证：`agentrt prompt show <name>`
+## Branch Strategy
 
-### 添加新分类
+This leaf repository is on the **`feature/official-hubs-01`** branch (active development). The management repository that aggregates it stays on `main`.
 
-1. 在 `templates/` 下创建新分类目录
-2. 添加提示词模板文件
-3. 更新 `registry.yaml` 注册新分类的提示词
+## License
 
----
+Dual-licensed under **AGPL v3 + Apache 2.0** (SPDX: `AGPL-3.0-or-later OR Apache-2.0`). See [LICENSE](LICENSE) for the full text.
 
-© 2026 SPHARX Ltd. All Rights Reserved.
+Copyright (c) 2025-2026 **SPHARX Ltd.** All Rights Reserved.
