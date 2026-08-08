@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import sys
 import time
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
@@ -18,6 +19,23 @@ from typing import Any, Dict, List, Optional
 import yaml
 
 logger = logging.getLogger(__name__)
+
+#: 离线模式告警去重标志：整个进程内只显式告警一次，避免每个样本重复刷屏
+_OFFLINE_WARNED = False
+
+
+def _warn_offline_mode(message: str) -> None:
+    """显式告警离线模式（同时打印与写日志，每进程仅一次）。
+
+    离线模式下所有样本返回空输出，评测指标全 0 且无意义；此处显式提示
+    用户结果不可作为 Prompt 质量依据，而非静默返回空 dict。
+    """
+    global _OFFLINE_WARNED
+    full = f"[离线模式] {message}"
+    logger.warning(full)
+    if not _OFFLINE_WARNED:
+        _OFFLINE_WARNED = True
+        print(full, file=sys.stderr)
 
 # ─── Data Models ──────────────────────────────────────────
 
@@ -285,7 +303,9 @@ class PromptEvaluator:
     ) -> Dict[str, Any]:
         """调用 Gateway API 执行 Prompt 并返回结果。
 
-        在无 Gateway 环境下返回空结果（用于离线评测模式）。
+        离线模式（未安装 requests、Gateway 不可达或调用失败）下返回空 dict：
+        此时所有评测指标（精确率 / 召回率 / 幻觉率）将退化为全 0 / 无意义，
+        报告仅供流程验证，不应作为 Prompt 质量的依据。离线行为会打印显式警告。
         """
         try:
             import requests
@@ -305,10 +325,18 @@ class PromptEvaluator:
             resp.raise_for_status()
             return resp.json().get("output", {})
         except ImportError:
-            logger.warning("requests library not available, returning empty output")
+            _warn_offline_mode(
+                "未安装 requests 库，Gateway 调用不可用：评测进入离线模式，"
+                "所有样本将返回空输出，评测结果（精确率/召回率等）全为 0，"
+                "对 Prompt 质量评估无参考意义。请安装 requests 并确保 Gateway 可达。"
+            )
             return {}
         except Exception as exc:
-            logger.warning("Gateway call failed: %s, returning empty output", exc)
+            _warn_offline_mode(
+                f"Gateway 调用失败（{exc}）：评测进入离线模式，所有样本将返回空输出，"
+                f"评测结果（精确率/召回率等）全为 0，对 Prompt 质量评估无参考意义。"
+                f"请检查 Gateway（{self._gateway_url}）是否可达。"
+            )
             return {}
 
     def _build_report(
