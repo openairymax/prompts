@@ -89,7 +89,7 @@ prompts/
 
 - **`scorer.py`** — 针对 `output_schema` 的字段级精确率 / 召回率 / 幻觉检测。
 - **`evaluate.py`** — 数据集驱动评估器，在 JSONL 数据集上运行某个提示词版本，产出聚合报告（平均精确率、平均召回率、幻觉率、延迟）。网关不可达时支持离线模式。
-- **`ab_test.py`** — 在相同数据集上对基线版本与候选版本进行配对 t 检验 A/B 对比，返回 `significant` 与 `p_value`。
+- **`ab_test.py`** — 在相同数据集上对基线版本与候选版本进行配对 t 检验 A/B 对比，返回 `ABTestReport`（含各指标 `significant` / `p_value` 与 `recommendation` 推荐结论）。
 
 ### 评估数据集（`datasets/`）
 
@@ -138,19 +138,20 @@ print(report.avg_precision, report.avg_recall, report.hallucination_rate)
 ### A/B 测试
 
 ```python
-from tuner.src.ab_test import ABTest
+from tuner.src.ab_test import ABTestRunner
 
-ab = ABTest(
+runner = ABTestRunner(
     prompts_dir="ecosystem/prompts",
     gateway_url="http://localhost:8080",
 )
-result = ab.compare(
+report = runner.ab_test(
     prompt_name="intent_classify",
     baseline_version="1.0.0",
     candidate_version="1.1.0",
     dataset_path="datasets/cognition/dataset_v1.jsonl",
 )
-print(result.significant, result.p_value)
+print(report.recommendation)
+print(report.significance_tests)  # 各指标的 significant / p_value
 ```
 
 ### CLI

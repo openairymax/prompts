@@ -138,19 +138,20 @@ print(report.avg_precision, report.avg_recall, report.hallucination_rate)
 ### A/B testing
 
 ```python
-from tuner.src.ab_test import ABTest
+from tuner.src.ab_test import ABTestRunner
 
-ab = ABTest(
+runner = ABTestRunner(
     prompts_dir="ecosystem/prompts",
     gateway_url="http://localhost:8080",
 )
-result = ab.compare(
+report = runner.ab_test(
     prompt_name="intent_classify",
     baseline_version="1.0.0",
     candidate_version="1.1.0",
     dataset_path="datasets/cognition/dataset_v1.jsonl",
 )
-print(result.significant, result.p_value)
+print(report.recommendation)
+print(report.significance_tests)  # per-metric significant / p_value
 ```
 
 ### CLI
