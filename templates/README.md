@@ -8,6 +8,17 @@
 memory/security），供运行时各 daemon（如 think_d/llm_d/mem_d）加载，
 是提示词逻辑的单一真相源。
 
+## 与其他模块的边界（SSoT 分工）
+
+| 领域 | 本目录职责 | 相邻模块 | 边界约定 |
+|------|-----------|----------|----------|
+| `system/*` | 通用系统提示词模板（default_agent / coding_agent / research_agent），供运行时 `prompt_loader` 按需加载 | `ecosystem/agents/airymax_agents/*/prompts/system.md` | 后者是各角色 Agent 执行体实际加载的**角色专属提示词**（更具体、含工具收敛守则），以角色实现为准；本目录模板用于通用场景与降级路径 |
+| `security/*` | 安全审查提示词模板（code_review / security_scan / input_validate），作为内容资产供组装 | `ecosystem/skills`（code_review / security_audit 技能，Python 与 C 插件实现） | skills 是**可执行能力封装**（含契约与执行入口），本目录是**提示词内容库**；两者互不硬依赖，skills 可内嵌自带提示词 |
+
+> 约定：涉及具体角色执行时，以 `ecosystem/agents/airymax_agents` 的角色
+> system.md 与 `ecosystem/skills` 的技能实现为权威；本目录模板面向通用
+> 组装与评估回归。
+
 ## 目录结构
 
 ```
