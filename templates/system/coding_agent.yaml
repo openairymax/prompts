@@ -1,6 +1,15 @@
 # AgentRT Prompt Template: coding_agent
 # Category: system
 # Version: 1.0.0
+#
+# 边界说明（SSoT）：本模板是 prompts/ 模块的「运行时模板」——面向 registry
+# 版本化、评估（tuner）与 /v1/prompt/execute 动态渲染，含 {placeholders} 占位符，
+# 服务于任意使用 AgentRT 的运行时租户。
+# 角色执行体的「出厂提示词」由 agents/ 模块持有（agents/airymax_agents/*/prompts/
+# system.md 与 airymax_agents_rs/crates/*/prompts/system.md），随 Agent 装配，
+# 面向具体角色实例。
+# 二者主题可能重叠（如 coding），但形态与消费方不同，禁止互相覆盖或合并；
+# 修改角色行为改 agents/，修改通用模板改本文件。
 
 name: "coding_agent"
 version: "1.0.0"
