@@ -1,26 +1,26 @@
 # AgentRT Prompt Registry
 # Version: 1.0.0
 # Auto-generated registry of all prompt templates.
-# Updated: 2026-06-15
+# Updated: 2026-08-29
 
 registry_version: "1.0.0"
-last_updated: "2026-06-15"
+last_updated: "2026-08-29"
 
 prompts:
-  # ─── Cognition ──────────────────────────────────────────
-  - name: "intent_classify"
-    version: "1.0.0"
-    category: "cognition"
-    path: "templates/cognition/intent_classify.yaml"
-    description: "将用户输入分类为预定义的意图类别"
-    model_family: "any"
-    status: "stable"
-
+  # ─── Cognition ─────────────────────────────────────────
   - name: "entity_extract"
     version: "1.0.0"
     category: "cognition"
     path: "templates/cognition/entity_extract.yaml"
     description: "从文本中提取命名实体及其属性"
+    model_family: "any"
+    status: "stable"
+
+  - name: "intent_classify"
+    version: "1.0.0"
+    category: "cognition"
+    path: "templates/cognition/intent_classify.yaml"
+    description: "将用户输入分类为预定义的意图类别"
     model_family: "any"
     status: "stable"
 
@@ -40,28 +40,20 @@ prompts:
     model_family: "any"
     status: "stable"
 
-  # ─── Memory ─────────────────────────────────────────────
+  # ─── Memory ────────────────────────────────────────────
+  - name: "dedup_decision"
+    version: "1.0.0"
+    category: "memory"
+    path: "templates/memory/dedup_decision.yaml"
+    description: "判断新提取的事实是否与已有事实重复，决定保留或合并"
+    model_family: "any"
+    status: "stable"
+
   - name: "extract_facts"
     version: "1.0.0"
     category: "memory"
     path: "templates/memory/extract_facts.yaml"
     description: "从对话中提取原子事实，用于记忆存储"
-    model_family: "any"
-    status: "stable"
-
-  - name: "dedup_decision"
-    version: "1.0.0"
-    category: "memory"
-    path: "templates/memory/dedup_decision.yaml"
-    description: "判断新提取的事实是否与已有事实重复"
-    model_family: "any"
-    status: "stable"
-
-  - name: "summarize"
-    version: "1.0.0"
-    category: "memory"
-    path: "templates/memory/summarize.yaml"
-    description: "对会话或文档进行迭代摘要压缩"
     model_family: "any"
     status: "stable"
 
@@ -73,20 +65,20 @@ prompts:
     model_family: "any"
     status: "stable"
 
-  # ─── Security ───────────────────────────────────────────
+  - name: "summarize"
+    version: "1.0.0"
+    category: "memory"
+    path: "templates/memory/summarize.yaml"
+    description: "对会话或文档进行迭代摘要压缩，保留关键信息"
+    model_family: "any"
+    status: "stable"
+
+  # ─── Security ──────────────────────────────────────────
   - name: "code_review"
     version: "1.0.0"
     category: "security"
     path: "templates/security/code_review.yaml"
-    description: "对代码进行安全审查，识别漏洞和不良实践"
-    model_family: "any"
-    status: "stable"
-
-  - name: "security_scan"
-    version: "1.0.0"
-    category: "security"
-    path: "templates/security/security_scan.yaml"
-    description: "对系统配置、依赖和基础设施进行安全扫描"
+    description: "对代码进行安全审查，识别漏洞、不良实践和合规问题"
     model_family: "any"
     status: "stable"
 
@@ -98,20 +90,28 @@ prompts:
     model_family: "any"
     status: "stable"
 
-  # ─── System ─────────────────────────────────────────────
+  - name: "security_scan"
+    version: "1.0.0"
+    category: "security"
+    path: "templates/security/security_scan.yaml"
+    description: "对系统配置、依赖和基础设施进行安全扫描"
+    model_family: "any"
+    status: "stable"
+
+  # ─── System ────────────────────────────────────────────
+  - name: "coding_agent"
+    version: "1.0.0"
+    category: "system"
+    path: "templates/system/coding_agent.yaml"
+    description: "编码 Agent 的 System Prompt，专注于软件开发和代码生成"
+    model_family: "any"
+    status: "stable"
+
   - name: "default_agent"
     version: "1.0.0"
     category: "system"
     path: "templates/system/default_agent.yaml"
     description: "默认 Agent 的 System Prompt，定义通用助手行为"
-    model_family: "any"
-    status: "stable"
-
-  - name: "coding_agent"
-    version: "1.0.0"
-    category: "system"
-    path: "templates/system/coding_agent.yaml"
-    description: "编码 Agent 的 System Prompt，专注于软件开发"
     model_family: "any"
     status: "stable"
 
@@ -123,6 +123,7 @@ prompts:
     model_family: "any"
     status: "stable"
 
+
 stats:
   total_prompts: 14
   categories:
@@ -132,5 +133,3 @@ stats:
     system: 3
   status:
     stable: 14
-    testing: 0
-    deprecated: 0

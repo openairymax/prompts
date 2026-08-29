@@ -51,3 +51,9 @@ jobs:
           find . -name "*.py" -not -path "./build/*" -not -path "./.venv/*" | while read f; do
             python -m py_compile "$f" && echo "[OK] $f" || echo "[NO] $f syntax error"
           done
+
+      - name: Registry drift check (0.1.6 P1-5 规则库管线门禁)
+        run: |
+          pip install pyyaml --quiet
+          python scripts/generate_registry.py --check
+          python scripts/validate_registry.py
