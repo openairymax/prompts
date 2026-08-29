@@ -19,7 +19,7 @@
 
 The repository ships a curated catalog of **14 official prompt templates** across 4 categories (Cognition / Memory / Security / System), a **registry** (`registry.yaml`) that tracks version, category and lifecycle status (`stable` / `testing` / `deprecated`) for every template, an **evaluation framework** (`tuner/`) that runs prompts against JSONL datasets and produces precision / recall / hallucination / latency reports, and an **A/B testing framework** that compares two prompt versions on the same dataset with paired t-test significance. Templates are plain YAML with `system`, `user_template`, `output_schema` and `metrics` sections.
 
-Within the ecosystem layer, `prompts/` is a self-contained template library with **no upstream Airymax repository dependency**. It is consumed downstream by agent applications (via the Airymax SDKs), the AgentRT runtime (which reads `registry.yaml` to resolve prompt names/versions and serves `/v1/prompt/execute`), CI/CD pipelines (which run the evaluator as a quality gate before promoting a prompt from `testing` to `stable`), and prompt authors (who use the A/B tester to validate candidates).
+Within the ecosystem layer, `prompts/` is a self-contained template library with **no upstream Airymax repository dependency**. It is consumed downstream by agent applications (via the Airymax SDKs, which load templates and render them themselves), the in-repo Tuner evaluation/A-B framework (which reads `registry.yaml`), CI/CD pipelines (which run the evaluator as a quality gate before promoting a prompt from `testing` to `stable`), and prompt authors (who use the A/B tester to validate candidates).
 
 ## Directory Structure
 
@@ -83,7 +83,7 @@ Every template is a YAML file with `name`, `version`, `description`, `model_fami
 
 ### Registry (`registry.yaml`)
 
-The single source of truth for every prompt's metadata — name, version, category, path, description, `model_family` and `status` (`stable` / `testing` / `deprecated`). All 14 templates are currently `stable`. The runtime resolves prompt names/versions through this registry.
+The single source of truth for every prompt's metadata — name, version, category, path, description, `model_family` and `status` (`stable` / `testing` / `deprecated`). All 14 templates are currently `stable`. The in-repo Tuner evaluation framework and A/B tester resolve prompt names/versions through this registry.
 
 ### Evaluation & Tuning Framework (`tuner/`)
 
@@ -111,7 +111,7 @@ JSONL datasets organized by category. The cognition category ships 3 versions pl
 | Consumer | How it uses `prompts/` |
 |----------|------------------------|
 | **Agent applications** | Load templates via the Airymax SDK (`sdk-python` / `sdk-go` / `sdk-rust` / `sdk-typescript`) and render them with runtime context |
-| **AgentRT runtime** | Reads `registry.yaml` to resolve prompt names and versions; serves `/v1/prompt/execute` endpoints |
+| **Tuner evaluation framework** | Reads `registry.yaml` to resolve prompt names and versions; runs evaluation and A/B tests on JSONL datasets |
 | **CI / CD pipelines** | Run `tuner/src/evaluate.py` as a quality gate before promoting a prompt from `testing` to `stable` |
 | **Prompt authors** | Use `tuner/src/ab_test.py` to validate that a candidate version beats the baseline before merging |
 | **Examples (`ecosystem/examples`)** | `prompt-tuner-demo` consumes the tuner framework and dataset format |

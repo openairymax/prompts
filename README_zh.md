@@ -19,7 +19,7 @@
 
 本仓提供精选的 **14 个官方提示词模板**，覆盖 4 大类别（Cognition / Memory / Security / System）；一个**注册表**（`registry.yaml`）追踪每个模板的版本、类别与生命周期状态（`stable` / `testing` / `deprecated`）；一个**评估框架**（`tuner/`）在 JSONL 数据集上运行提示词，产出精确率 / 召回率 / 幻觉率 / 延迟报告；以及一个**A/B 测试框架**，在相同数据集上对比两个版本，使用配对 t 检验判定显著性。模板为纯 YAML，包含 `system`、`user_template`、`output_schema` 与 `metrics` 字段。
 
-在生态层中，`prompts/` 是自包含的模板库，**不依赖任何上游 Airymax 仓**。下游被 Agent 应用（通过 Airymax SDK）、AgentRT 运行时（读取 `registry.yaml` 解析提示词名/版本，提供 `/v1/prompt/execute` 端点）、CI/CD 流水线（在将提示词从 `testing` 提升为 `stable` 前运行评估器作为质量门禁）以及提示词作者（使用 A/B 测试器验证候选版本）消费。
+在生态层中，`prompts/` 是自包含的模板库，**不依赖任何上游 Airymax 仓**。下游被 Agent 应用（通过 Airymax SDK 加载模板并自行渲染）、本仓的 Tuner 评估 / A/B 测试框架（读取 `registry.yaml`）、CI/CD 流水线（在将提示词从 `testing` 提升为 `stable` 前运行评估器作为质量门禁）以及提示词作者（使用 A/B 测试器验证候选版本）消费。
 
 ## 目录结构
 
@@ -83,7 +83,7 @@ prompts/
 
 ### 注册表（`registry.yaml`）
 
-所有提示词元信息的唯一真相源——名称、版本、类别、路径、描述、`model_family` 与 `status`（`stable` / `testing` / `deprecated`）。当前 14 个模板均为 `stable`。运行时通过此注册表解析提示词名/版本。
+所有提示词元信息的唯一真相源——名称、版本、类别、路径、描述、`model_family` 与 `status`（`stable` / `testing` / `deprecated`）。当前 14 个模板均为 `stable`。本仓 Tuner 评估框架与 A/B 测试器通过此注册表解析提示词名/版本。
 
 ### 评估与调优框架（`tuner/`）
 
@@ -111,7 +111,7 @@ prompts/
 | 消费方 | 使用方式 |
 |--------|----------|
 | **Agent 应用** | 通过 Airymax SDK（`sdk-python` / `sdk-go` / `sdk-rust` / `sdk-typescript`）加载模板并用运行时上下文渲染 |
-| **AgentRT 运行时** | 读取 `registry.yaml` 解析提示词名与版本；提供 `/v1/prompt/execute` 端点 |
+| **Tuner 评估框架** | 读取 `registry.yaml` 解析提示词名与版本，在 JSONL 数据集上运行评估与 A/B 测试 |
 | **CI / CD 流水线** | 在将提示词从 `testing` 提升为 `stable` 前，运行 `tuner/src/evaluate.py` 作为质量门禁 |
 | **提示词作者** | 合并前使用 `tuner/src/ab_test.py` 验证候选版本优于基线 |
 | **示例（`ecosystem/examples`）** | `prompt-tuner-demo` 消费 tuner 框架与数据集格式 |
