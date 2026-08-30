@@ -212,7 +212,7 @@ class PromptEvaluator:
 
     def __init__(
         self,
-        prompts_dir: str = "ecosystem/prompts",
+        prompts_dir: str = "",
         timeout_ms: int = 30000,
         **kwargs: Any,
     ):
@@ -220,7 +220,12 @@ class PromptEvaluator:
 
         0.1.6 生态 SSoT（S-3）：prompts 为「离线评测 + 模板库」定位，
         无运行时渲染端点；历史 gateway_url 参数保留仅为向后兼容，不再使用。
+
+        默认 prompts_dir 解析为本叶仓模板根（独立 clone 与伞仓组装均正确）：
+        独立叶仓即仓库根 `prompts`；伞仓组装即 `ecosystem/prompts`。
         """
+        if not prompts_dir:
+            prompts_dir = str(Path(__file__).resolve().parents[2])
         self._prompts_dir = prompts_dir
         self._timeout_ms = timeout_ms
 

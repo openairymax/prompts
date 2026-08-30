@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from ecosystem.prompts.tuner.src.evaluate import (
+from prompts.tuner.src.evaluate import (
     PromptCase,
     EvaluatedCase,
     EvaluationReport,
@@ -19,7 +19,7 @@ from ecosystem.prompts.tuner.src.evaluate import (
     _compute_field_recall,
     _detect_hallucination,
 )
-from ecosystem.prompts.tuner.src.ab_test import (
+from prompts.tuner.src.ab_test import (
     MetricDelta,
     SignificanceResult,
     ABTestReport,
@@ -27,7 +27,7 @@ from ecosystem.prompts.tuner.src.ab_test import (
     _normal_cdf,
     _paired_t_test,
 )
-from ecosystem.prompts.tuner.src.scorer import (
+from prompts.tuner.src.scorer import (
     DimensionScore,
     ScoreReport,
     AutoScorer,
@@ -236,8 +236,9 @@ class TestPromptEvaluator:
 
     def test_init_defaults(self):
         evaluator = PromptEvaluator()
-        assert evaluator._prompts_dir == "ecosystem/prompts"
-        assert evaluator._gateway_url == "http://localhost:8080"
+        # S-3：离线评测引擎，默认 prompts_dir 解析到本叶仓模板根（独立 clone 与
+        # 伞仓组装均正确），不再有 gateway_url 网络端点。
+        assert evaluator._prompts_dir.endswith("prompts")
         assert evaluator._timeout_ms == 30000
 
     def test_custom_timeout(self):
