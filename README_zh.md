@@ -7,9 +7,9 @@
 
 [![Version](https://img.shields.io/badge/version-0.1.1-5a6b7e)](https://atomgit.com/openairymax/prompts)
 [![License](https://img.shields.io/badge/license-AGPL--3.0+Apache--2.0-4a90d9)](LICENSE)
-[![Branch](https://img.shields.io/badge/branch-feature%2Fofficial--hubs--01-6f7b8e)](https://atomgit.com/openairymax/prompts)
+[![Branch](https://img.shields.io/badge/branch-develop%2Fhubs--01-6f7b8e)](https://atomgit.com/openairymax/prompts)
 
-**仓库:** `git@atomgit.com:openairymax/prompts.git` · **分支:** `feature/official-hubs-01`
+**仓库:** `git@atomgit.com:openairymax/prompts.git` · **分支:** `develop/hubs-01`
 
 ---
 
@@ -191,7 +191,7 @@ CI 定义在 `.github/workflows/ci.yml`，每次推送时运行 tuner 测试。
 
 ## 分支策略
 
-本叶子仓位于 **`feature/official-hubs-01`** 分支（活跃开发）。聚合它的管理仓保持在 `main`。
+本叶子仓位于 **`develop/hubs-01`** 分支（活跃开发）。聚合它的管理仓保持在 `main`。
 
 ## 许可证
 

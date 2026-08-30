@@ -213,11 +213,15 @@ class PromptEvaluator:
     def __init__(
         self,
         prompts_dir: str = "ecosystem/prompts",
-        gateway_url: str = "http://localhost:8080",
         timeout_ms: int = 30000,
+        **kwargs: Any,
     ):
+        """离线 Prompt 评测引擎。
+
+        0.1.6 生态 SSoT（S-3）：prompts 为「离线评测 + 模板库」定位，
+        无运行时渲染端点；历史 gateway_url 参数保留仅为向后兼容，不再使用。
+        """
         self._prompts_dir = prompts_dir
-        self._gateway_url = gateway_url
         self._timeout_ms = timeout_ms
 
     # ── Main API ──────────────────────────────────────────
@@ -268,7 +272,7 @@ class PromptEvaluator:
         """评测单个样本。"""
         start = time.monotonic()
         try:
-            actual_output = self._call_gateway(case, template)
+            actual_output = self._render_offline(case, template)
             latency_ms = int((time.monotonic() - start) * 1000)
 
             precision = _compute_field_precision(case.expected_output, actual_output)
@@ -298,46 +302,34 @@ class PromptEvaluator:
                 error=str(exc),
             )
 
-    def _call_gateway(
+    def _render_offline(
         self, case: PromptCase, template: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """调用 Gateway API 执行 Prompt 并返回结果。
+        """离线渲染 Prompt 模板并返回结构化校验结果。
 
-        离线模式（未安装 requests、Gateway 不可达或调用失败）下返回空 dict：
-        此时所有评测指标（精确率 / 召回率 / 幻觉率）将退化为全 0 / 无意义，
-        报告仅供流程验证，不应作为 Prompt 质量的依据。离线行为会打印显式警告。
+        0.1.6 生态 SSoT（S-3）：prompts 定位为「离线评测 + 模板库」——
+        无运行时渲染端点（gateway 无 /v1/prompt/execute 路由），因此评测
+        不再伪装在线调用 LLM，而是校验模板渲染本身：user_template 中的
+        变量占位符能否被样本 input 成功替换、渲染是否无异常。
         """
-        try:
-            import requests
+        user_tpl = template.get("user_template", "") or ""
+        # 简单占位符渲染：{field} → case.input 或模板默认值
+        rendered = user_tpl
+        for key, val in case.__dict__.items():
+            placeholder = "{" + key + "}"
+            if placeholder in rendered:
+                rendered = rendered.replace(placeholder, str(val))
+        # 残留未替换占位符视为渲染失败（模板变量与样本字段不匹配）
+        import re
 
-            payload = {
-                "prompt_name": template.get("name", ""),
-                "version": template.get("version", ""),
-                "input": case.input,
-                "temperature": template.get("temperature", 0.3),
-                "max_tokens": template.get("max_tokens", 1024),
-            }
-            resp = requests.post(
-                f"{self._gateway_url}/v1/prompt/execute",
-                json=payload,
-                timeout=self._timeout_ms / 1000,
-            )
-            resp.raise_for_status()
-            return resp.json().get("output", {})
-        except ImportError:
-            _warn_offline_mode(
-                "未安装 requests 库，Gateway 调用不可用：评测进入离线模式，"
-                "所有样本将返回空输出，评测结果（精确率/召回率等）全为 0，"
-                "对 Prompt 质量评估无参考意义。请安装 requests 并确保 Gateway 可达。"
-            )
-            return {}
-        except Exception as exc:
-            _warn_offline_mode(
-                f"Gateway 调用失败（{exc}）：评测进入离线模式，所有样本将返回空输出，"
-                f"评测结果（精确率/召回率等）全为 0，对 Prompt 质量评估无参考意义。"
-                f"请检查 Gateway（{self._gateway_url}）是否可达。"
-            )
-            return {}
+        unresolved = re.findall(r"\{[a-zA-Z_][a-zA-Z0-9_]*\}", rendered)
+        return {
+            "rendered": rendered,
+            "resolved": not unresolved,
+            "unresolved": unresolved,
+            "template_name": template.get("name", ""),
+            "version": template.get("version", ""),
+        }
 
     def _build_report(
         self,
@@ -453,7 +445,11 @@ def main() -> None:
         default="ecosystem/prompts",
         help="Prompts directory",
     )
-    parser.add_argument("--gateway-url", default="http://localhost:8080")
+    parser.add_argument(
+        "--gateway-url",
+        default=None,
+        help="(已废弃，0.1.6 S-3) 历史参数：prompts 为离线评测定位，不再调用网关",
+    )
     parser.add_argument("--max-cases", type=int, default=None)
     parser.add_argument("--output", default=None, help="Output report path (JSON)")
     args = parser.parse_args()

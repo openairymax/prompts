@@ -7,9 +7,9 @@
 
 [![Version](https://img.shields.io/badge/version-0.1.1-5a6b7e)](https://atomgit.com/openairymax/prompts)
 [![License](https://img.shields.io/badge/license-AGPL--3.0+Apache--2.0-4a90d9)](LICENSE)
-[![Branch](https://img.shields.io/badge/branch-feature%2Fofficial--hubs--01-6f7b8e)](https://atomgit.com/openairymax/prompts)
+[![Branch](https://img.shields.io/badge/branch-develop%2Fhubs--01-6f7b8e)](https://atomgit.com/openairymax/prompts)
 
-**Repository:** `git@atomgit.com:openairymax/prompts.git` · **Branch:** `feature/official-hubs-01`
+**Repository:** `git@atomgit.com:openairymax/prompts.git` · **Branch:** `develop/hubs-01`
 
 ---
 
@@ -191,7 +191,7 @@ CI is defined in `.github/workflows/ci.yml` and runs the tuner tests on every pu
 
 ## Branch Strategy
 
-This leaf repository is on the **`feature/official-hubs-01`** branch (active development). The management repository that aggregates it stays on `main`.
+This leaf repository is on the **`develop/hubs-01`** branch (active development). The management repository that aggregates it stays on `main`.
 
 ## License
 

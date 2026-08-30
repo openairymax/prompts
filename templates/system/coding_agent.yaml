@@ -3,8 +3,8 @@
 # Version: 1.0.0
 #
 # 边界说明（SSoT）：本模板是 prompts/ 模块的「运行时模板」——面向 registry
-# 版本化、评估（tuner）与 /v1/prompt/execute 动态渲染，含 {placeholders} 占位符，
-# 服务于任意使用 AgentRT 的运行时租户。
+# 版本化与离线评估（tuner，0.1.6 S-3 定位：离线评测 + 模板库，无运行时渲染
+# 端点），含 {placeholders} 占位符，服务于任意使用 AgentRT 的运行时租户。
 # 角色执行体的「出厂提示词」由 agents/ 模块持有（agents/airymax_agents/*/prompts/
 # system.md 与 airymax_agents_rs/crates/*/prompts/system.md），随 Agent 装配，
 # 面向具体角色实例。
