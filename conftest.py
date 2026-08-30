@@ -8,6 +8,8 @@ prompts 是独立叶仓（可单独 clone/测试），顶层包为 `prompts`。�
 """
 
 import sys
+# 禁止写入 .pyc 字节码缓存，根治源码区 __pycache__ 污染
+sys.dont_write_bytecode = True
 from pathlib import Path
 
 _PROMPTS_ROOT = Path(__file__).resolve().parent
