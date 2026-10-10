@@ -11,7 +11,8 @@
   python3 scripts/generate_registry.py --check    # 只比对不落盘（CI 门禁）
 
 --check 模式忽略 last_updated（每次生成都变，不构成漂移）；
-其余字段（条目集合/字段值/stats）有差异即退出码非 0。
+条目集合与字段值有差异即退出码非 0。stats 聚合一致性由
+validate_registry.py 校验，本脚本不重复实现同一约束（避免双份真相）。
 """
 
 from __future__ import annotations

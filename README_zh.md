@@ -17,7 +17,7 @@
 
 `ecosystem/prompts/` 是 Airymax AI Agent 运行时平台的**提示词模板库与评估 / 调优框架**，提供驱动 Agent 行为所需的提示词版本管理、评估与持续优化能力——即生态中每个 Agent 所执行的认知、记忆、安全与系统提示词。
 
-本仓提供精选的 **14 个官方提示词模板**，覆盖 4 大类别（Cognition / Memory / Security / System）；一个**注册表**（`registry.yaml`）追踪每个模板的版本、类别与生命周期状态（`stable` / `testing` / `deprecated`）；一个**评估框架**（`tuner/`）在 JSONL 数据集上运行提示词，产出精确率 / 召回率 / 幻觉率 / 延迟报告；以及一个**A/B 测试框架**，在相同数据集上对比两个版本，使用配对 t 检验判定显著性。模板为纯 YAML，包含 `system`、`user_template`、`output_schema` 与 `metrics` 字段。
+本仓提供精选的 **14 个官方提示词模板**，覆盖 4 大类别（Cognition / Memory / Security / System）；一个**注册表**（`registry.yaml`）追踪每个模板的版本、类别与生命周期状态（`stable` / `testing` / `deprecated`）；一个**评估框架**（`tuner/`）在 JSONL 数据集上运行提示词，产出精确率 / 召回率 / 幻觉率 / 延迟报告；以及一个**A/B 测试框架**，在相同数据集上对比两个版本，使用配对 t 检验判定显著性。模板为纯 YAML，包含 `system`、`user_template` 与 `metrics` 字段；cognition / memory / security 三个结构化抽取类别额外声明 `output_schema`（JSON Schema）以固定期望输出形状。
 
 在生态层中，`prompts/` 是自包含的模板库，**不依赖任何上游 Airymax 仓**。下游被 Agent 应用（通过 Airymax SDK 加载模板并自行渲染）、本仓的 Tuner 评估 / A/B 测试框架（读取 `registry.yaml`）、CI/CD 流水线（在将提示词从 `testing` 提升为 `stable` 前运行评估器作为质量门禁）以及提示词作者（使用 A/B 测试器验证候选版本）消费。
 
@@ -79,7 +79,7 @@ prompts/
 | **Security** | 3 | `code_review`、`security_scan`、`input_validate` | 安全：代码审查、安全扫描、输入校验 |
 | **System** | 3 | `default_agent`、`coding_agent`、`research_agent` | 不同 Agent 角色的系统提示词 |
 
-每个模板为 YAML 文件，含 `name`、`version`、`description`、`model_family`、`temperature`、`max_tokens`、`system` 块、`user_template`（含 `{占位符}`）、`output_schema`（JSON Schema）以及 `metrics` 块（声明评估器校验的质量门禁：`target_precision`、`target_recall`、`max_hallucination_rate`）。
+每个模板为 YAML 文件，含 `name`、`version`、`description`、`model_family`、`temperature`、`max_tokens`、`system` 块、`user_template`（含 `{占位符}`）以及 `metrics` 块（声明评估器校验的质量门禁：`target_precision`、`target_recall`、`max_hallucination_rate`）。cognition、memory、security 类别的模板额外声明 `output_schema`（JSON Schema）以固定结构化输出形状；system 人设模板有意省略它，因其输出为自由文本。
 
 ### 注册表（`registry.yaml`）
 
@@ -87,7 +87,7 @@ prompts/
 
 ### 评估与调优框架（`tuner/`）
 
-- **`scorer.py`** — 针对 `output_schema` 的字段级精确率 / 召回率 / 幻觉检测。
+- **`scorer.py`** — 针对每条样本 `expected_output` 的字段级精确率 / 召回率 / 幻觉检测。
 - **`evaluate.py`** — 数据集驱动评估器，在 JSONL 数据集上运行某个提示词版本，产出聚合报告（平均精确率、平均召回率、幻觉率、延迟）。网关不可达时支持离线模式。
 - **`ab_test.py`** — 在相同数据集上对基线版本与候选版本进行配对 t 检验 A/B 对比，返回 `ABTestReport`（含各指标 `significant` / `p_value` 与 `recommendation` 推荐结论）。
 
@@ -187,7 +187,7 @@ pip install pyyaml requests pytest
 python -m pytest tuner/tests/ -v
 ```
 
-CI 定义在 `.github/workflows/ci.yml`，每次推送时运行 tuner 测试。
+CI 定义在 `.github/workflows/ci.yml`，每次推送时运行：许可证 / README / NOTICE 头检查、`py_compile` 语法检查，以及规则库管线门禁——先 `generate_registry.py --check`（漂移）后 `validate_registry.py`（模板字段完整性、`metrics` 质量门禁契约、`stats` 聚合一致性与数据集一致性）。tuner 单元测试需要 `pytest`，在本地组装的工程区内运行。
 
 ## 分支策略
 

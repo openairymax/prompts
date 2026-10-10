@@ -17,7 +17,7 @@
 
 `ecosystem/prompts/` is the **prompt template library and evaluation / tuning framework** of the Airymax AI Agent Runtime Platform. It provides everything needed to version, evaluate and continuously optimize the prompts that drive agent behavior — the cognitive, memory, security and system prompts executed by every agent in the ecosystem.
 
-The repository ships a curated catalog of **14 official prompt templates** across 4 categories (Cognition / Memory / Security / System), a **registry** (`registry.yaml`) that tracks version, category and lifecycle status (`stable` / `testing` / `deprecated`) for every template, an **evaluation framework** (`tuner/`) that runs prompts against JSONL datasets and produces precision / recall / hallucination / latency reports, and an **A/B testing framework** that compares two prompt versions on the same dataset with paired t-test significance. Templates are plain YAML with `system`, `user_template`, `output_schema` and `metrics` sections.
+The repository ships a curated catalog of **14 official prompt templates** across 4 categories (Cognition / Memory / Security / System), a **registry** (`registry.yaml`) that tracks version, category and lifecycle status (`stable` / `testing` / `deprecated`) for every template, an **evaluation framework** (`tuner/`) that runs prompts against JSONL datasets and produces precision / recall / hallucination / latency reports, and an **A/B testing framework** that compares two prompt versions on the same dataset with paired t-test significance. Templates are plain YAML with `system`, `user_template` and `metrics` sections; the structured-extraction categories (cognition / memory / security) additionally declare an `output_schema` (JSON Schema) that pins the expected output shape.
 
 Within the ecosystem layer, `prompts/` is a self-contained template library with **no upstream Airymax repository dependency**. It is consumed downstream by agent applications (via the Airymax SDKs, which load templates and render them themselves), the in-repo Tuner evaluation/A-B framework (which reads `registry.yaml`), CI/CD pipelines (which run the evaluator as a quality gate before promoting a prompt from `testing` to `stable`), and prompt authors (who use the A/B tester to validate candidates).
 
@@ -79,7 +79,7 @@ prompts/
 | **Security** | 3 | `code_review`, `security_scan`, `input_validate` | Security: code review, security scan, input validation |
 | **System** | 3 | `default_agent`, `coding_agent`, `research_agent` | System prompts for different agent personas |
 
-Every template is a YAML file with `name`, `version`, `description`, `model_family`, `temperature`, `max_tokens`, a `system` block, a `user_template` (with `{placeholders}`), an `output_schema` (JSON Schema) and a `metrics` block declaring the quality gates the evaluator checks against (`target_precision`, `target_recall`, `max_hallucination_rate`).
+Every template is a YAML file with `name`, `version`, `description`, `model_family`, `temperature`, `max_tokens`, a `system` block, a `user_template` (with `{placeholders}`) and a `metrics` block declaring the quality gates the evaluator checks against (`target_precision`, `target_recall`, `max_hallucination_rate`). Templates in the cognition, memory and security categories additionally declare an `output_schema` (JSON Schema) that pins the structured output shape; the system persona templates intentionally omit it because they emit free-form text.
 
 ### Registry (`registry.yaml`)
 
@@ -87,7 +87,7 @@ The single source of truth for every prompt's metadata — name, version, catego
 
 ### Evaluation & Tuning Framework (`tuner/`)
 
-- **`scorer.py`** — field-level precision / recall / hallucination detection against `output_schema`.
+- **`scorer.py`** — field-level precision / recall / hallucination detection against each case's `expected_output`.
 - **`evaluate.py`** — dataset-driven evaluator that runs a prompt version across a JSONL dataset and produces an aggregated report (avg precision, avg recall, hallucination rate, latency). Supports an offline mode when the gateway is unreachable.
 - **`ab_test.py`** — paired t-test A/B comparison of a baseline vs candidate version on the same dataset, returning `significant` and `p_value`.
 
@@ -187,7 +187,7 @@ pip install pyyaml requests pytest
 python -m pytest tuner/tests/ -v
 ```
 
-CI is defined in `.github/workflows/ci.yml` and runs the tuner tests on every push.
+CI is defined in `.github/workflows/ci.yml` and runs on every push: license / README / NOTICE header checks, a `py_compile` syntax check, and the registry pipeline gate — `generate_registry.py --check` (drift) followed by `validate_registry.py` (template field integrity, the `metrics` quality-gate contract, `stats` aggregation consistency and dataset consistency). The tuner unit tests require `pytest` and run in a locally assembled workspace.
 
 ## Branch Strategy
 
